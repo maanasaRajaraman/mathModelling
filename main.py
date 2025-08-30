@@ -107,7 +107,7 @@ def spline_equation_row(xi_minus1, xi, xi_plus1, f_xi_minus1, f_xi, f_xi_plus1):
     a = xi - xi_minus1
     b = 2 * (xi_plus1 - xi_minus1)
     c = xi_plus1 - xi
-    rhs = (6 / (xi_plus1 - xi)) * (f_xi_plus1 - f_xi) - (6 / (xi - xi_minus1)) * (f_xi - f_xi_minus1)
+    rhs = (6 / (c)) * (f_xi_plus1 - f_xi) - (6 / (a)) * (f_xi - f_xi_minus1)
     return a, b, c, rhs
 
 variables = sp.symbols(f'f\'\'1:{n-1}')
