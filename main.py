@@ -157,3 +157,26 @@ plt.title("Interpolation Methods")
 plt.legend()
 plt.grid(True)
 plt.show()
+
+
+# t test 
+import math 
+def t_test_paired(X, Y):
+    if len(X) != len(Y):
+        raise ValueError("Both samples must have same length")
+
+    n = len(X) 
+    diffs = [X[i] - Y[i] for i in range(n)] 
+    mean_diff = sum(diffs) / n 
+    sq_diffs = [(d - mean_diff)**2 for d in diffs]
+    sd = math.sqrt(sum(sq_diffs) / (n - 1)) 
+    t_value = mean_diff / (sd / math.sqrt(n))
+
+    return t_value
+
+# Example
+X = [10, 12, 13, 15, 16]
+Y = [9, 11, 12, 14, 15]
+
+t_val = t_test_paired(X, Y)
+print("t statistic =", t_val)
