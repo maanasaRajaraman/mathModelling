@@ -179,12 +179,13 @@ print(f"Durbin-Watson Statistic: {dw_stat:.4f}")
 
 import pandas as pd
 import seaborn as sns
+import numpy as np
 import matplotlib.pyplot as plt
 
 year = [1991, 1992, 1993, 1994, 1995]
-spring = [102, 110, 111, 115, 122]
-summer = [120, 126, 128, 135, 144]
-fall = [90, 95, 97, 103, 110]
+spring = [122, 110, 111, 115, 122]
+summer = [166, 126, 128, 135, 144]
+fall = [190, 195, 155, 163, 90]
 winter = [78, 83, 86, 91, 98]
 
 sn_df = pd.DataFrame({
@@ -205,13 +206,14 @@ sn['percent_of_moving_avg'] = (sn['value']/sn['4_point_moving_avg'])*100
 
 mod_ind = sn.groupby('season')['percent_of_moving_avg'].median()
 nf = 400/mod_ind.sum()
-sn_indices = mod_ind * nf
+ind = mod_ind * nf
 
-sn['sn_index'] = sn['season'].map(sn_indices)
+sn['sn_index'] = sn['season'].map(ind)
 sn['dsn_value'] = (sn['value'] / sn['sn_index']) * 100
 
 dsn_clean = sn.dropna(subset=['dsn_value'])
 
+# Linear Regression
 X_trend = dsn_clean.index.values
 y_dsn = dsn_clean['dsn_value'].values
 
@@ -224,23 +226,48 @@ b1 = ((X_trend - x_mean) * (y_dsn - y_mean)).sum() / ((X_trend - x_mean)**2).sum
 b0 = y_mean - b1 * x_mean
 
 # predict trend for all time points
-sn['trend'] = b0 + b1 * sn.index.values
-
-# Add time index column for plotting
+sn['trend'] = b0 + b1 * sn.index.values 
 sn['time_index'] = sn.index
 
 # Print regression equation
 print(f"Linear Trend Equation: y = {b0:.4f} + {b1:.4f} * t")
 
+# Quadratic Fit
+coeffs = np.polyfit(X_trend, y_dsn, 2)   # [c2, c1, c0]
+c2, c1, c0 = coeffs
+sn['trend_quadratic'] = c2*(sn.index.values**2) + c1*sn.index.values + c0
+
+print(f"Quadratic Trend Equation: y = {c0:.4f} + {c1:.4f}*t + {c2:.4f}*t^2")
+
+def calculate_mse(Y_true, Y_pred):
+    return np.mean((Y_true - Y_pred)**2)
+
+y_pred_linear = b0 + b1 * X_trend
+y_pred_quadratic = c2*(X_trend**2) + c1*X_trend + c0
+
+mse_linear = calculate_mse(y_dsn, y_pred_linear)
+mse_quadratic = calculate_mse(y_dsn, y_pred_quadratic)
+
+print(mse_linear)
+print(mse_quadratic)
+
+dsn_clean['cyclical_variation'] = dsn_clean['dsn_value'] - sn['trend']
+dsn_clean['relative_cyclical_residual'] = (dsn_clean['cyclical_variation'] / sn['trend']) * 100
+
+# Print cyclical results
+print("\nCyclical Variation:")
+print(dsn_clean[['year', 'season', 'cyclical_variation']])
+
+print("\nRelative Cyclical Residual (%):")
+print(dsn_clean[['year', 'season', 'relative_cyclical_residual']])
+
+
 # Plot with equation on chart
 sns.lineplot(data=sn, x='time_index', y='value', label='Original Data')
 sns.lineplot(data=sn, x='time_index', y='4_point_moving_avg', label='4 point moving average')
-plt.plot(sn['time_index'], sn['trend'], label='Trend Line', color='red')
+plt.plot(sn['time_index'], sn['trend'], label='Linear Trend Line', color='red')
+plt.plot(sn['time_index'], sn['trend_quadratic'], label='Quadratic Fit', color='black')
 
-# Add equation text on plot
-eq_text = f"y = {b0:.2f} + {b1:.2f}*t"
-plt.text(sn['time_index'].max()*0.5, sn['value'].max()*0.9, eq_text,
-         fontsize=12, color='red', bbox=dict(facecolor='white', alpha=0.6))
 
 plt.title('Original data vs 4 quarter moving average with Linear Trend')
 plt.xlabel('Time index')
