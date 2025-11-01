@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 31 21:31:18 2025
 
-@author: maana
 """ 
 
 import pandas as pd
@@ -57,3 +55,4 @@ print(f"Minimum Variance Portfolio Risk: {portfolio_risks[min_idx]*100:.3f}%")
 print(f"Return: {portfolio_returns[min_idx]*100:.3f}%")
 print(f"Weights: {np.round(weights[min_idx], 3)}")
 print(f"Securities: {ror.columns.tolist()}")
+
